@@ -36,18 +36,9 @@
       display: grid; grid-template-rows: auto 1fr auto; gap: 12px; align-items: start; justify-items: center;
     }
 
-    /* ——— Üst bar: live sayaç + inline tutorial ——— */
+    /* ——— Üst bar gizli (tutorial yazısız) ——— */
     .topbar { width: 100%; display: grid; gap: 10px; place-items: center; }
-    .live { display:inline-flex; align-items:center; gap:8px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,.75); border:1px solid #eaeaea; border-radius: 999px; padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,.05); backdrop-filter: blur(4px); }
-    .live .dot { width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(95,191,144,.6); animation: pulse 1.8s infinite ease-out; }
-    @keyframes pulse { 0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(95,191,144,.45);} 70%{ transform: scale(1.25); box-shadow: 0 0 0 10px rgba(95,191,144,0);} 100%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(95,191,144,0);} }
-
-    /* ——— Inline Tutorial Bar ——— */
-    .tutbar { width: min(96vw, var(--card-w)); display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center;
-      background:#fff; color:#2a2a2a; border:1px solid #eaeaea; border-radius: 14px; padding: 10px 12px; box-shadow: 0 8px 18px rgba(0,0,0,.06);
-      cursor: pointer; user-select: none; }
-    .tutbar strong { color: var(--accent-dark); }
-    .tutbar .sep { color: #bababa; }
+    .tutbar{ display:none !important; }
 
     .stage {
       position: relative;
@@ -56,7 +47,7 @@
     }
     @media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
 
-    /* —— Kart arka yüzü: üst üste dizili, daha gerçekçi —— */
+    /* —— Kart arka yüzü: üst üste dizili —— */
     .stack { position: absolute; inset: 0; pointer-events: none; }
     .back {
       position: absolute; inset: 0; margin: 6px; border-radius: var(--radius);
@@ -64,14 +55,11 @@
       box-shadow: 0 8px 20px rgba(0,0,0,.06);
       overflow: hidden; opacity: .22;
     }
-    .back::before{ /* desen (silik) */
-      content: ""; position: absolute; inset: 0; opacity: .5;
+    .back::before{ content: ""; position: absolute; inset: 0; opacity: .5;
       background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='140' viewBox='0 0 200 140'><rect fill='white' width='200' height='140'/><g fill='none' stroke='%2336a66a' stroke-width='5' opacity='.35'><path d='M20,30 q15,-18 30,0 q15,18 30,0' /><path d='M30,95 q18,12 36,0' /><path d='M120,80 q14,-16 28,0' /><path d='M150,40 q10,10 20,0' /></g><g fill='%2336a66a' opacity='.25'><circle cx='150' cy='30' r='8'/><circle cx='60' cy='70' r='6'/></g></svg>");
-      background-size: 200px 140px; background-repeat: repeat;
-      filter: saturate(0.8) blur(.2px);
+      background-size: 200px 140px; background-repeat: repeat; filter: saturate(0.8) blur(.2px);
     }
-    .back::after{ /* kâğıt tanesi & parıltı */
-      content: ""; position: absolute; inset: 0;
+    .back::after{ content: ""; position: absolute; inset: 0;
       background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.9)),
                   radial-gradient(60% 40% at 70% 0%, rgba(255,255,255,.65), transparent 60%);
       mix-blend-mode: screen;
@@ -81,20 +69,96 @@
     .b1{ transform: rotate(-2deg) translateY(22px) scale(.99); opacity: .22; }
 
     .card {
-      position: relative;
-      width: 100%; height: 100%; background: var(--paper);
-      border-radius: var(--radius);
-      box-shadow: 0 10px 26px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06);
-      border: 1px solid #e6e6e6;
-      display: grid; grid-template-rows: 1fr auto; padding: 24px; gap: 8px;
-      user-select: none; cursor: pointer; text-align: center;
+      position: relative; width: 100%; height: 100%; background: var(--paper);
+      border-radius: var(--radius); box-shadow: 0 10px 26px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06);
+      border: 1px solid #e6e6e6; display: grid; grid-template-rows: 1fr auto; padding: 24px; gap: 8px;
+      user-select: none; cursor: pointer; text-align: center; transition: opacity .25s ease, transform .25s ease;
     }
+    .stage.tut .card { opacity: 0; transform: scale(.98); pointer-events: none; }
     .card .body { display: grid; place-items: center; padding: 0 6px; }
     .card h1 { margin: 0; font-size: clamp(20px, 4.8vw, 28px); line-height: 1.35; font-weight: 500; }
     .card .watermark { font-weight: 600; font-size: 18px; opacity: .85; color: #2a2a2a; letter-spacing: .2px; }
 
     .muted { color: var(--muted); }
     .hidden { display: none !important; }
+
+    /* ——— YAZISIZ, DAHA AÇIK ANLATAN TUTORIAL ——— */
+    .intro { position:absolute; inset:0; display:grid; place-items:center; padding:16px; }
+    .intro .panel { position:relative; width: min(96%, 560px); border-radius: 20px; background:#fff; border:1px solid #eaeaea; box-shadow: 0 18px 42px rgba(0,0,0,.08); padding: 18px; display:grid; gap: 14px; text-align:center; }
+    .intro .slides { position:relative; height: 260px; z-index:1; }
+    .slide { position:absolute; inset:0; opacity:0; transform: translateY(8px) scale(.98); transition: opacity .4s ease, transform .4s ease; display:grid; place-items:center; gap:10px; padding:8px; }
+    .slide.show { opacity:1; transform: translateY(0) scale(1); }
+
+    /* Ek: Tap label */
+    .tapLabel { position:absolute; top:10px; left:50%; transform:translateX(-50%); z-index:10; pointer-events:none; font-size:14px; color:#1f2b25; background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.82)); border:1px solid #e8e8e8; padding:8px 14px; border-radius:999px; box-shadow:0 10px 24px rgba(0,0,0,.12), inset 0 0 0 1px rgba(255,255,255,.5); backdrop-filter: blur(6px); animation: tapblink 2.2s ease-in-out infinite; }
+    @keyframes tapblink { 0%,100%{opacity:.8; transform:translateX(-50%) scale(1);} 50%{opacity:1; transform:translateX(-50%) scale(1.05);} }
+
+    /* ——— S1: Dokun & Flip ——— */
+    .scene { position: relative; width: 230px; height: 170px; }
+    .phone { position:absolute; inset:0; margin:auto; width: 200px; height: 140px; border-radius: 22px; background: #f8fafc; border:1px solid #e6e6e6; box-shadow:0 12px 26px rgba(0,0,0,.08); display:grid; place-items:center; }
+    .screen { position: relative; width: 180px; height: 120px; border-radius: 16px; background: linear-gradient(135deg,#f9f9ff,#f3fff8); overflow:hidden; }
+
+    .card3d { position:absolute; left:50%; top:50%; width: 120px; height: 80px; transform: translate(-50%,-50%) perspective(800px); transform-style: preserve-3d; animation: flipCycle 3.2s ease-in-out infinite; }
+    .face { position:absolute; inset:0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; border:1px solid #e6e6e6; box-shadow:0 10px 22px rgba(0,0,0,.08); }
+    .front { background:#fff; }
+    .backf { background: repeating-linear-gradient(45deg, #e9f6ef, #e9f6ef 8px, #ffffff 8px, #ffffff 16px); transform: rotateY(180deg); }
+
+    .finger { position:absolute; width: 30px; height: 30px; border-radius: 999px; background: var(--accent); right: 24px; bottom: 16px; box-shadow:0 8px 18px rgba(95,191,144,.45); animation: fingerTap 3.2s ease-in-out infinite; }
+    .finger::after { content:""; position:absolute; inset:0; border-radius:999px; box-shadow:0 0 0 0 rgba(95,191,144,.35); animation: rip 3.2s ease-in-out infinite; }
+
+    @keyframes flipCycle {
+      0% { transform: translate(-50%,-50%) perspective(800px) rotateY(0deg); }
+      12% { transform: translate(-50%,-50%) perspective(800px) rotateY(0deg); }
+      28% { transform: translate(-50%,-50%) perspective(800px) rotateY(180deg); }
+      40% { transform: translate(-50%,-50%) perspective(800px) rotateY(180deg); }
+      55% { transform: translate(-50%,-50%) perspective(800px) rotateY(0deg); }
+      100% { transform: translate(-50%,-50%) perspective(800px) rotateY(0deg); }
+    }
+    @keyframes fingerTap {
+      0%,10% { transform: translate(0,0) scale(1); opacity: 0; }
+      12% { opacity: 1; }
+      18% { transform: translate(-60px,-40px) scale(1); }
+      22% { transform: translate(-60px,-40px) scale(.88); }
+      28% { transform: translate(-60px,-40px) scale(1); }
+      45% { opacity: 1; }
+      55% { opacity: 0; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; }
+    }
+    @keyframes rip { 0%,10%{ box-shadow:0 0 0 0 rgba(95,191,144,0);} 18%{ box-shadow:0 0 0 0 rgba(95,191,144,.35);} 28%{ box-shadow:0 0 0 18px rgba(95,191,144,0);} 55%{ box-shadow:0 0 0 0 rgba(95,191,144,0);} 100%{ box-shadow:0 0 0 0 rgba(95,191,144,0);} }
+
+    /* ——— S2: 180° dönüş & sırası gelen kişi ——— */
+    .rotateDemo { position:absolute; inset:0; display:grid; place-items:center; }
+    .turnScene { width:230px; height:170px; position:relative; }
+    .turnScene .phone { width:180px; height:120px; }
+    .turnScene .screen { width:160px; height:100px; }
+    .turnPhone { animation: turnCycle 4.2s ease-in-out infinite; }
+
+    .avatars { position:absolute; inset:0; pointer-events:none; }
+    .av { position:absolute; width:28px; height:28px; border-radius:999px; background:linear-gradient(135deg,#ffd3e2,#ffc7ae); box-shadow:0 8px 18px rgba(0,0,0,.08); border:1px solid #f3c3b6; opacity:.6; transform: scale(.9); transition: opacity .3s, transform .3s; }
+    .av.top { top:-6px; left: calc(50% - 14px); }
+    .av.bot { bottom:-6px; left: calc(50% - 14px); }
+    .avatars.active-top .top { opacity:1; transform: scale(1); }
+    .avatars.active-bot .bot { opacity:1; transform: scale(1); }
+
+    .ring { position:absolute; width:120px; height:120px; border-radius:999px; border:2px dashed var(--accent); display:grid; place-items:center; }
+    .arrow180 { width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:14px solid var(--accent-dark); }
+
+    @keyframes turnCycle {
+      0%{ transform: rotate(0deg);} 25%{ transform: rotate(180deg);} 50%{ transform: rotate(180deg);} 75%{ transform: rotate(0deg);} 100%{ transform: rotate(0deg);} }
+
+    /* ——— S3: 10 kart ——— */
+    .stackDemo { position:absolute; inset:0; display:grid; place-items:center; }
+    .miniStack { position:relative; width:150px; height:100px; }
+    .mini { position:absolute; width:96px; height:64px; border-radius:12px; background:#fff; border:1px solid #e6e6e6; box-shadow:0 10px 22px rgba(0,0,0,.08); left: calc(50% - 48px); top: calc(50% - 32px); transform-origin: center; }
+    .mini.m2{ transform: translate(12px,-8px) rotate(-3deg); opacity:.9; }
+    .mini.m3{ transform: translate(-10px,6px) rotate(4deg); opacity:.85; }
+
+    .pips { position:absolute; left:0; right:0; bottom:-6px; display:flex; gap:6px; justify-content:center; }
+    .pip { width:8px; height:8px; border-radius:999px; background:#e8f3ee; box-shadow: inset 0 0 0 1px #d9e9e2; }
+    .pip.on { background: var(--accent); box-shadow: 0 4px 10px rgba(95,191,144,.35); }
+
+    /* Yazısızlaştırma */
+    .intro .slide p, .intro .hint { display:none !important; }
 
     /* ——— Bitiş Ekranı / Timeline ——— */
     .end { width: var(--card-w); max-width: var(--card-w); background: transparent; border: 0; box-shadow: none; padding: 6px 4px; text-align: left; display: block; }
@@ -125,18 +189,70 @@
 <body>
   <div class="app" id="app">
     <div class="topbar">
-      <div class="live"><span class="dot" aria-hidden="true"></span><span id="liveCount">Anlık: 1 kişi</span></div>
       <div id="tutorial" class="tutbar" role="button" tabindex="0" aria-label="Oyuna geç">
-        <strong>Oyuna geç</strong><span class="sep"> • </span><span id="tutHint">Telefonu ortaya koyun; karta dokundukça ilerler.</span>
+        <strong>Oyuna geç</strong><span class="sep"> • </span><span id="tutHint">Kısa bir anlatımdan sonra dokunup başlayın.</span>
       </div>
     </div>
 
-    <div class="stage" id="stage" aria-live="polite" aria-atomic="true">
+    <div class="stage tut" id="stage" aria-live="polite" aria-atomic="true">
       <div class="stack" aria-hidden="true">
         <div class="back b3"></div>
         <div class="back b2"></div>
         <div class="back b1"></div>
       </div>
+
+      <!-- YAZISIZ, ZENGİN ANİMASYONLU TUTORIAL -->
+      <div class="intro" id="intro" role="button" aria-label="Oyunu anlatım. Dokununca oyuna geçer." tabindex="0">
+        <div class="panel">
+          <div class="tapLabel" aria-hidden="true">Oyuna geçmek için dokun</div>
+          <div class="slides">
+            <!-- S1: Tap & Flip -->
+            <div class="slide s1 show">
+              <div class="scene tapScene">
+                <div class="phone">
+                  <div class="screen">
+                    <div class="card3d">
+                      <div class="face front"></div>
+                      <div class="face backf"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="finger"></div>
+              </div>
+            </div>
+            <!-- S2: 180° dönüş & sırası gelen kişi -->
+            <div class="slide s2">
+              <div class="scene turnScene">
+                <div class="ring"><div class="arrow180"></div></div>
+                <div class="avatars active-top" id="avatars">
+                  <div class="av top"></div>
+                  <div class="av bot"></div>
+                </div>
+                <div class="phone turnPhone">
+                  <div class="screen"></div>
+                </div>
+              </div>
+            </div>
+            <!-- S3: Rastgele 10 kart → pips -->
+            <div class="slide s3">
+              <div class="scene">
+                <div class="stackDemo">
+                  <div class="miniStack">
+                    <div class="mini m1"></div>
+                    <div class="mini m2"></div>
+                    <div class="mini m3"></div>
+                    <div class="pips" id="pips">
+                      <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+                      <span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="card" role="button" tabindex="0" aria-label="Kart. İleri gitmek için dokun, boşluk ya da sağ ok tuşuna bas.">
         <div class="body">
           <h1 id="cardText">Yükleniyor…</h1>
@@ -206,12 +322,6 @@
     <div class="muted" id="progress">0 / 10</div>
   </div>
 
-  <!-- Supabase presence anahtarlarını buraya koy (public anon key — service_role DEĞİL) -->
-<script>
-  window.BI2F_SUPABASE_URL = "https://PROJE_ADIN.supabase.co";   // Project URL
-  window.BI2F_SUPABASE_ANON_KEY = "ANON_PUBLIC_KEYIN";           // Public anon key
-</script>
-
   <script>
     const PAGE_LOADED_AT = Date.now();
 
@@ -259,7 +369,6 @@
     const stage = document.getElementById('stage');
     const card = document.getElementById('card');
     const cardText = document.getElementById('cardText');
-    const info = document.getElementById('info'); // artık yok; guard ile kullanılacak
     const progress = document.getElementById('progress');
 
     const end = document.getElementById('end');
@@ -272,36 +381,7 @@
 
     const tutorial = document.getElementById('tutorial');
     const tutHint = document.getElementById('tutHint');
-
-    // —— Live sayaç ——
-    const liveCountEl = document.getElementById('liveCount');
-    function updateLiveCount(n){ if (liveCountEl) liveCountEl.textContent = `Anlık: ${n} kişi`; }
-    function initPresence(){
-      const hasBC = 'BroadcastChannel' in window;
-      const id = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
-      const peers = new Map();
-      function render(){ updateLiveCount(Math.max(1, peers.size + 1)); }
-      if (hasBC) {
-        const bc = new BroadcastChannel('bi2flort-presence');
-        bc.onmessage = (e) => {
-          const data = e.data || {}; const from = data.from; if (!from || from === id) return;
-          if (data.type === 'hello' || data.type === 'heartbeat') { peers.set(from, Date.now()); render(); }
-          if (data.type === 'bye') { peers.delete(from); render(); }
-        };
-        // announce + heartbeat
-        bc.postMessage({ type:'hello', from:id });
-        setInterval(() => {
-          const now = Date.now(); for (const [k,t] of peers) { if (now - t > 20000) peers.delete(k); }
-          bc.postMessage({ type:'heartbeat', from:id });
-          render();
-        }, 5000);
-        window.addEventListener('unload', () => { try{ bc.postMessage({ type:'bye', from:id }); }catch(_){} });
-      } else {
-        // BroadcastChannel yoksa en az 1 göster
-        render();
-      }
-      render();
-    }
+    const intro = document.getElementById('intro');
 
     function randInt(max){
       if (window.crypto && window.crypto.getRandomValues) {
@@ -320,7 +400,6 @@
     function applyOrientation(){
       const angle = (i % 2 === 0) ? 0 : 180;
       stage.style.transform = `rotate(${angle}deg)`;
-      if (info) info.textContent = `Sıra: Kişi ${(i % 2) + 1}`; // artık görünmüyor; guard
     }
 
     function render(){
@@ -392,7 +471,6 @@
       ended = true;
       stage.classList.add('hidden');
       end.classList.remove('hidden');
-      if (info) info.textContent = 'Bitti';
 
       const mins = minutesPlayed();
       durationEl.textContent = `${mins} dakika oynadınız`;
@@ -438,27 +516,48 @@
       }
     }
 
-    function showTutorial(){ tutorial.classList.remove('hidden'); tutOpen = true; runStepper(); }
-    function hideTutorial(){ tutorial.classList.add('hidden'); tutOpen = false; startGameClock(); }
-
-    // ——— Inline tutorial ipuçları ———
-    let tIdx = 0; let tTimer;
-    const TIPS = [
-      'Telefonu ortaya koyun; karta dokundukça ilerler.',
-      'Her kartta sahne 180° döner; sıradaki kişi düz okur.',
-      'Her turda rastgele 10 kart gelir (kişi başı 5). Bittiğinde indirim sürprizi!'
-    ];
-    function runStepper(){
-      if (!tutHint) return;
-      tutHint.textContent = TIPS[tIdx];
-      clearTimeout(tTimer);
-      tTimer = setTimeout(() => { tIdx = (tIdx + 1) % TIPS.length; runStepper(); }, 2200);
+    function showTutorial(){
+      if (!tutOpen){
+        tutOpen = true; stage.classList.add('tut'); tutorial.classList.remove('hidden'); intro.classList.remove('hidden');
+        runStepper(); startIntro();
+      }
     }
+    function hideTutorial(){
+      if (tutOpen){
+        tutOpen = false; startGameClock(); stage.classList.remove('tut'); tutorial.classList.add('hidden'); intro.classList.add('hidden'); stopIntro();
+      }
+    }
+
+    // ——— Inline tutorial ipuçları (üst bar - gizli ama kalsın) ———
+    let tIdx = 0; let tTimer;
+    const TIPS = [ 'Telefona sırayla dokunun; kart açılır.', 'Her kartta sahne 180° döner; karşı taraf düz okur.', 'Her oyunda rastgele 10 kart gelir. Bittiğinde indirim sürprizi!' ];
+    function runStepper(){ if (!tutHint) return; tutHint.textContent = TIPS[tIdx]; clearTimeout(tTimer); tTimer = setTimeout(() => { tIdx = (tIdx + 1) % TIPS.length; runStepper(); }, 2600); }
+
+    // ——— Tutorial animasyon kontrol ———
+    let introIdx = 0; let introTimer; let slides;
+    function showSlide(k){ if (!slides) return; slides.forEach((el, idx)=> el.classList.toggle('show', idx===k)); }
+    function startIntro(){
+      slides = Array.from(document.querySelectorAll('#intro .slide'));
+      introIdx = 0; showSlide(introIdx);
+      // S2 avatar highlight döngüsü
+      const avatars = document.getElementById('avatars');
+      let avTop = true;
+      setInterval(()=>{ if (!tutOpen) return; avTop = !avTop; avatars.classList.toggle('active-top', avTop); avatars.classList.toggle('active-bot', !avTop); }, 2100);
+      // S3 pips akışı
+      const pips = (document.getElementById('pips')||{}).children || [];
+      let pipIdx = 0; setInterval(()=>{ if (!tutOpen) return; for(let j=0;j<pips.length;j++){ pips[j].classList.toggle('on', j<=pipIdx); } pipIdx = (pipIdx+1)%10; }, 380);
+      clearTimeout(introTimer); introTimer = setTimeout(cycleIntro, 3000);
+    }
+    function stopIntro(){ clearTimeout(introTimer); }
+    function cycleIntro(){ if (!tutOpen) return; introIdx = (introIdx + 1) % 3; showSlide(introIdx); introTimer = setTimeout(cycleIntro, 3200); }
 
     // Etkileşimler
     card.addEventListener('click', next);
     tutorial.addEventListener('click', () => { if (tutOpen) hideTutorial(); });
     tutorial.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && tutOpen) { e.preventDefault(); hideTutorial(); } });
+    intro.addEventListener('click', () => { if (tutOpen) hideTutorial(); });
+    intro.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && tutOpen) { e.preventDefault(); hideTutorial(); } });
+    coupon.addEventListener('click', copyCoupon);
 
     document.addEventListener('keydown', (e) => {
       if (tutOpen && (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape')) { hideTutorial(); return; }
@@ -466,9 +565,8 @@
     });
 
     // İlk kurulum
-    reshuffle();
-    runStepper();
-    initPresence();
+
+    reshuffle(); runStepper(); startIntro();
 
     // ——— Otomatik Testler ———
     (function selfTest(){
@@ -481,13 +579,13 @@
         console.assert(new Set(deck).size === 10, 'Destedeki kartlar benzersiz olmalı');
         const allInMaster = deck.every(x => MASTER.includes(x));
         console.assert(allInMaster, 'Destedeki tüm kartlar MASTER içinde olmalı');
-        // Live sayaç görünüyor olmalı
-        const lc = (document.getElementById('liveCount')||{}).textContent||'';
-        console.assert(/kişi/.test(lc), 'Live sayaç metni görünmeli');
-        // Tutorial tıklama ile kapanmalı
+        // Tutorial başlangıçta açık ve intro görünür olmalı
         console.assert(tutOpen === true, 'Tutorial başlangıçta açık olmalı');
-        tutorial.dispatchEvent(new Event('click'));
-        console.assert(tutOpen === false && tutorial.classList.contains('hidden'), 'Tutorial tıklanınca kapanmalı');
+        console.assert(document.getElementById('intro') && !document.getElementById('intro').classList.contains('hidden'), 'Intro görünür olmalı');
+        console.assert(stage.classList.contains('tut'), 'Stage tut sınıfı almalı');
+        // Tutorial tıklama ile kapanmalı
+        document.getElementById('intro').dispatchEvent(new Event('click'));
+        console.assert(tutOpen === false && document.getElementById('intro').classList.contains('hidden'), 'Intro tıklanınca kapanmalı');
         // Bitiş ekranı
         const saveI = i; i = deck.length - 1; render(); next();
         console.assert(ended === true && !end.classList.contains('hidden'), 'Son karttan sonra bitiş ekranı açılmalı');
@@ -496,9 +594,8 @@
         const tl = document.querySelector('.timeline');
         console.assert(!!tl && tl.classList.contains('revealed'), 'Timeline revealed olmalı');
         // Geri yükle
-        reshuffle(); hideEnd();
-        if (snap.tutOpen) { tutorial.classList.remove('hidden'); tutOpen = true; } else { tutorial.classList.add('hidden'); tutOpen = false; }
-        i = snap.i; if (snap.ended) showEnd(); else render();
+        reshuffle(); hideEnd(); if (snap.tutOpen) { showTutorial(); } else { hideTutorial(); }
+        i = snap.i; if (snap.ended) showEnd(); else { render(); }
         console.log('%cSelf-test: OK','padding:4px 8px;border:1px solid #0a0;color:#0a0');
       } catch (e) { console.error('Self-test hata:', e); }
     })();
