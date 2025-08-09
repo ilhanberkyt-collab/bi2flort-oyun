@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>bi2flört – Kart Oyunu (Prototip)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --card-w: min(92vw, 460px);
+      --radius: 18px;
+      --ink: #1e1e1e;
+      --muted: #6a6a6a;
+      --paper: #ffffff;
+      --accent: #5fbf90; /* pastel yeşil */
+      --accent-dark: #27996a;
+      --bg1: #fff4f7;    /* pastel pembe */
+      --bg2: #eef7ff;    /* pastel mavi  */
+      --bg3: #f4fff7;    /* pastel mint  */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Lora, serif; color: var(--ink);
+      min-height: 100svh;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      display: grid; place-items: center;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    }
+    .app {
+      width: 100%; height: 100%;
+      padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 14px);
+      display: grid; grid-template-rows: auto 1fr auto; gap: 12px; align-items: start; justify-items: center;
+    }
+
+    /* ——— Üst bar: live sayaç + inline tutorial ——— */
+    .topbar { width: 100%; display: grid; gap: 10px; place-items: center; }
+    .live { display:inline-flex; align-items:center; gap:8px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,.75); border:1px solid #eaeaea; border-radius: 999px; padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,.05); backdrop-filter: blur(4px); }
+    .live .dot { width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 0 rgba(95,191,144,.6); animation: pulse 1.8s infinite ease-out; }
+    @keyframes pulse { 0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(95,191,144,.45);} 70%{ transform: scale(1.25); box-shadow: 0 0 0 10px rgba(95,191,144,0);} 100%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(95,191,144,0);} }
+
+    /* ——— Inline Tutorial Bar ——— */
+    .tutbar { width: min(96vw, var(--card-w)); display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center;
+      background:#fff; color:#2a2a2a; border:1px solid #eaeaea; border-radius: 14px; padding: 10px 12px; box-shadow: 0 8px 18px rgba(0,0,0,.06);
+      cursor: pointer; user-select: none; }
+    .tutbar strong { color: var(--accent-dark); }
+    .tutbar .sep { color: #bababa; }
+
+    .stage {
+      position: relative;
+      width: var(--card-w); height: min(72vh, 640px);
+      transition: transform 220ms ease; display: grid; place-items: center;
+    }
+    @media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
+
+    /* —— Kart arka yüzü: üst üste dizili, daha gerçekçi —— */
+    .stack { position: absolute; inset: 0; pointer-events: none; }
+    .back {
+      position: absolute; inset: 0; margin: 6px; border-radius: var(--radius);
+      background: #fff; border: 1px solid #e5efe8;
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      overflow: hidden; opacity: .22;
+    }
+    .back::before{ /* desen (silik) */
+      content: ""; position: absolute; inset: 0; opacity: .5;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='140' viewBox='0 0 200 140'><rect fill='white' width='200' height='140'/><g fill='none' stroke='%2336a66a' stroke-width='5' opacity='.35'><path d='M20,30 q15,-18 30,0 q15,18 30,0' /><path d='M30,95 q18,12 36,0' /><path d='M120,80 q14,-16 28,0' /><path d='M150,40 q10,10 20,0' /></g><g fill='%2336a66a' opacity='.25'><circle cx='150' cy='30' r='8'/><circle cx='60' cy='70' r='6'/></g></svg>");
+      background-size: 200px 140px; background-repeat: repeat;
+      filter: saturate(0.8) blur(.2px);
+    }
+    .back::after{ /* kâğıt tanesi & parıltı */
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.9)),
+                  radial-gradient(60% 40% at 70% 0%, rgba(255,255,255,.65), transparent 60%);
+      mix-blend-mode: screen;
+    }
+    .b3{ transform: rotate(-6deg) translateY(10px) scale(.98); opacity: .14; }
+    .b2{ transform: rotate(4deg) translateY(16px) scale(.985); opacity: .18; }
+    .b1{ transform: rotate(-2deg) translateY(22px) scale(.99); opacity: .22; }
+
+    .card {
+      position: relative;
+      width: 100%; height: 100%; background: var(--paper);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 26px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06);
+      border: 1px solid #e6e6e6;
+      display: grid; grid-template-rows: 1fr auto; padding: 24px; gap: 8px;
+      user-select: none; cursor: pointer; text-align: center;
+    }
+    .card .body { display: grid; place-items: center; padding: 0 6px; }
+    .card h1 { margin: 0; font-size: clamp(20px, 4.8vw, 28px); line-height: 1.35; font-weight: 500; }
+    .card .watermark { font-weight: 600; font-size: 18px; opacity: .85; color: #2a2a2a; letter-spacing: .2px; }
+
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+
+    /* ——— Bitiş Ekranı / Timeline ——— */
+    .end { width: var(--card-w); max-width: var(--card-w); background: transparent; border: 0; box-shadow: none; padding: 6px 4px; text-align: left; display: block; }
+    .timeline { position: relative; padding-left: 28px; display: grid; gap: 14px; }
+    .timeline::before { content: ""; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%); border-radius: 2px; transform: scaleY(0); transform-origin: top; transition: transform 900ms ease-out; }
+    .timeline.revealed::before { transform: scaleY(1); }
+    .tli { position: relative; display: grid; grid-template-columns: 1fr; }
+    .tli .dot { position: absolute; left: 7px; top: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 8px 18px rgba(95,191,144,.35), 0 0 0 4px rgba(95,191,144,.15); opacity: 0; transform: scale(.6); transition: transform .35s ease, opacity .35s ease; }
+    .tli.show .dot { opacity: 1; transform: scale(1); }
+    .tile { background: #fff; border: 1px solid #e8e8e8; border-radius: 18px; padding: 14px; box-shadow: 0 12px 26px rgba(0,0,0,.06); opacity: 0; transform: translateY(8px); transition: transform .35s ease, opacity .35s ease; }
+    .tli.show .tile { opacity: 1; transform: translateY(0); }
+    .tile .head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .tile h3 { margin: 0; font-size: 14px; font-weight: 600; color: #2a2a2a; }
+    .tile .lead { font-size: clamp(16px, 4.2vw, 18px); line-height: 1.4; }
+    .tile .sub { font-size: 14px; color: var(--muted); }
+
+    .ico { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); box-shadow: 0 10px 18px rgba(39,153,106,.25), inset 0 0 0 1px rgba(255,255,255,.35); }
+    .ico svg { width: 16px; height: 16px; display: block; }
+
+    .coupon { display: inline-flex; align-items: center; gap: 10px; justify-content: center; padding: 10px 14px; border: 1px dashed #bcbcbc; border-radius: 12px; cursor: pointer; user-select: none; }
+    .coupon code { font-weight: 600; font-size: 18px; }
+    .coupon .state { font-size: 14px; color: var(--muted); }
+    .cta { position: relative; display: inline-block; text-decoration: none; text-align: center; padding: 14px 18px; border-radius: 14px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #fff; font-weight: 700; }
+    .cta::after { content:""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.0) 100%); transform: translateX(-120%); }
+    .cta:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="live"><span class="dot" aria-hidden="true"></span><span id="liveCount">Anlık: 1 kişi</span></div>
+      <div id="tutorial" class="tutbar" role="button" tabindex="0" aria-label="Oyuna geç">
+        <strong>Oyuna geç</strong><span class="sep"> • </span><span id="tutHint">Telefonu ortaya koyun; karta dokundukça ilerler.</span>
+      </div>
+    </div>
+
+    <div class="stage" id="stage" aria-live="polite" aria-atomic="true">
+      <div class="stack" aria-hidden="true">
+        <div class="back b3"></div>
+        <div class="back b2"></div>
+        <div class="back b1"></div>
+      </div>
+      <div class="card" id="card" role="button" tabindex="0" aria-label="Kart. İleri gitmek için dokun, boşluk ya da sağ ok tuşuna bas.">
+        <div class="body">
+          <h1 id="cardText">Yükleniyor…</h1>
+        </div>
+        <div class="watermark">bi2flört</div>
+      </div>
+    </div>
+
+    <div id="end" class="end hidden" aria-live="polite">
+      <div class="timeline" id="timeline">
+        <div class="tli" id="tl-duration">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="tile">
+            <div class="head">
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+              <h3>Süre</h3>
+            </div>
+            <div id="duration" class="lead">—</div>
+          </div>
+        </div>
+        <div class="tli" id="tl-summary">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="tile">
+            <div class="head">
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 4.6L19 9l-4.4 1.8L12 16l-2.6-5.2L5 9l4.8-2.4L12 2z"/></svg></span>
+              <h3>Deneyim Özeti</h3>
+            </div>
+            <div id="expSummary" class="sub">—</div>
+          </div>
+        </div>
+        <div class="tli" id="tl-offer">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="tile">
+            <div class="head">
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8v12"/><path d="M3 12h18"/><path d="M12 8c-1.7 0-3-1.3-3-3 0-1.1.9-2 2-2 1.2 0 2.5 1 3 2 .5-1 1.8-2 3-2 1.1 0 2 .9 2 2 0 1.7-1.3 3-3 3H12z"/></svg></span>
+              <h3>Teklif</h3>
+            </div>
+            <div class="lead">deneme nasıldı bilmiyoruz ama tamamından çok zevk alacağınıza eminiz hemen %10 indirimle satın almak için aşağıdaki butona bas</div>
+          </div>
+        </div>
+        <div class="tli" id="tl-coupon">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="tile">
+            <div class="head">
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14v4a2 2 0 0 0 0 4v4H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z"/><path d="M12 6v12" stroke-dasharray="3 3"/></svg></span>
+              <h3>İndirim Kodu</h3>
+            </div>
+            <div id="coupon" class="coupon" role="button" aria-label="İndirim kodunu kopyala" tabindex="0">
+              <code id="couponCode">deneme10</code>
+              <span class="state" id="couponState">Kopyala</span>
+            </div>
+          </div>
+        </div>
+        <div class="tli" id="tl-cta">
+          <div class="dot" aria-hidden="true"></div>
+          <div class="tile">
+            <div class="head">
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></span>
+              <h3>Satın Alma</h3>
+            </div>
+            <a class="cta" id="cta" href="https://bi2shop.com/" target="_blank" rel="noopener">hemen al yarın kargolansın</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="muted" id="progress">0 / 10</div>
+  </div>
+
+  <script>
+    const PAGE_LOADED_AT = Date.now();
+
+    // ——— Kart Havuzu (30) ———
+    const MASTER = [
+      "Bir dakika boyunca birbirinizin gözlerine bakın, ilk kırpan ceza kartı çeker. Kimse kırpmazsa belki öpüşürsünüz zaten.",
+      "Şu an bulunduğun ortamda sana en garip ve en hoş gelen nesneleri söyle ve neden böyle düşündüğünü açıkla.",
+      "Karşı tarafın boynunu nota nota öperek bir şarkı mırıldan. Bilemezse bir ceza kartı çeksin.",
+      "Bir şarkı seç ve  karşı tarafa bu şarkının nasıl bir sahnenin arka planında çalacağını anlattır.",
+      "Bir sır ver ama iyi bi’ sır olsun.",
+      "Geçmiş kartlardan istediğin birini kullanma hakkı. (İstediğin zaman kullanabilirsin. Soru veya ceza kartı fark etmez.)",
+      "Sırayla birbirinizde en çok hoşunuza giden şeyi söyleyin.",
+      "Ceza kartı çek",
+      "Karşı tarafa kendi hayatınla ilgili 2’si doğru 1’i yalan 3 cümle söyle, karşı taraf hangisinin yalan olduğunu bulmaya çalışsın. (Bulamazsa ceza kartı çeksin.)",
+      "Güven düşüşü oyunu oynayın. (Kartı çeken kişi arkası dönük şekilde kendini bırakır ve karşısındaki onu tutar.)",
+      "Bu kartı istediğin zamanda kullanarak karşı tarafın istediği bir yerine şaplak atabilirsin.",
+      "Üç ay sonra hayatında ne değişmiş olacak? Anlat.",
+      "Seks sırasında en iyi olduğun pozisyonu söyle.",
+      "En sevdiğin 3 yetişkin film kategorisini söyle.",
+      "En büyük flört sinyalin nedir? Hangi hareketi yaptıysan flörtleştiğini istemeden de olsa gösterirsin.",
+      "Sekste olmazsa olmaz dediğin şey nedir?",
+      "Kim daha fazla sarhoş hissediyorsa bir kart daha çeksin; eğer kimse sarhoş hissetmiyorsa alkollerinizden yudumlayın.",
+      "En sevdiğin üç seks pozisyonunu söyle ve birini karşı tarafın üstünde göster.",
+      "Arkadaş ortamında bir lakabın var mı? Yoksa ne olabilirdi?",
+      "Sorgusuz sualsiz 3 ceza kartı çek.",
+      "Son ceza kartını çeken kişi 2 ceza kartı daha çeksin.",
+      "Evde bir kedi varsa kucağına almaya çalış, yoksa karşındakini kucağına al ve sonraki tur bitene kadar kucağında otursun.",
+      "Misafir olan kişi bir ceza kartı çeksin.",
+      "Karşındakiyle ilk tanıştığında ne düşündün ve ne çıktı?",
+      "Uyurken sarılmayı sevenlerden misin?",
+      "Bu flörtte ilk kim kime yürüdü.",
+      "Arkadaş ortamında en çok aldığın eleştiri nedir?",
+      "Çocukluğuna dair en güzel anın nedir?",
+      "Yaşlanmak istediğin şehir veya ülke hangisi?",
+      "Alkoller bittiyse tam şu an tazeleme vakti, eğer bitmediyse bi yudum daha alın."
+    ];
+
+    // ——— Seçili Deste (10 rastgele) ———
+    let deck = [];
+    let i = 0;
+    let ended = false;
+    let tutOpen = true; // inline tutorial başlangıçta açık
+    let gameStartedAt = null;
+
+    const stage = document.getElementById('stage');
+    const card = document.getElementById('card');
+    const cardText = document.getElementById('cardText');
+    const info = document.getElementById('info'); // artık yok; guard ile kullanılacak
+    const progress = document.getElementById('progress');
+
+    const end = document.getElementById('end');
+    const durationEl = document.getElementById('duration');
+    const expSummaryEl = document.getElementById('expSummary');
+    const coupon = document.getElementById('coupon');
+    const couponCode = document.getElementById('couponCode');
+    const couponState = document.getElementById('couponState');
+    const timeline = document.getElementById('timeline');
+
+    const tutorial = document.getElementById('tutorial');
+    const tutHint = document.getElementById('tutHint');
+
+    // —— Live sayaç ——
+    const liveCountEl = document.getElementById('liveCount');
+    function updateLiveCount(n){ if (liveCountEl) liveCountEl.textContent = `Anlık: ${n} kişi`; }
+    function initPresence(){
+      const hasBC = 'BroadcastChannel' in window;
+      const id = (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()).slice(2);
+      const peers = new Map();
+      function render(){ updateLiveCount(Math.max(1, peers.size + 1)); }
+      if (hasBC) {
+        const bc = new BroadcastChannel('bi2flort-presence');
+        bc.onmessage = (e) => {
+          const data = e.data || {}; const from = data.from; if (!from || from === id) return;
+          if (data.type === 'hello' || data.type === 'heartbeat') { peers.set(from, Date.now()); render(); }
+          if (data.type === 'bye') { peers.delete(from); render(); }
+        };
+        // announce + heartbeat
+        bc.postMessage({ type:'hello', from:id });
+        setInterval(() => {
+          const now = Date.now(); for (const [k,t] of peers) { if (now - t > 20000) peers.delete(k); }
+          bc.postMessage({ type:'heartbeat', from:id });
+          render();
+        }, 5000);
+        window.addEventListener('unload', () => { try{ bc.postMessage({ type:'bye', from:id }); }catch(_){} });
+      } else {
+        // BroadcastChannel yoksa en az 1 göster
+        render();
+      }
+      render();
+    }
+
+    function randInt(max){
+      if (window.crypto && window.crypto.getRandomValues) {
+        const buf = new Uint32Array(1); window.crypto.getRandomValues(buf);
+        return Math.floor((buf[0] / 4294967296) * max);
+      }
+      return Math.floor(Math.random() * max);
+    }
+
+    function pickRandom(arr, n){
+      const idxs = new Set();
+      while (idxs.size < n) idxs.add(randInt(arr.length));
+      return [...idxs].map(k => arr[k]);
+    }
+
+    function applyOrientation(){
+      const angle = (i % 2 === 0) ? 0 : 180;
+      stage.style.transform = `rotate(${angle}deg)`;
+      if (info) info.textContent = `Sıra: Kişi ${(i % 2) + 1}`; // artık görünmüyor; guard
+    }
+
+    function render(){
+      cardText.textContent = deck[i] || "";
+      progress.textContent = `${Math.min(i+1, deck.length)} / ${deck.length}`;
+      applyOrientation();
+    }
+
+    function startGameClock(){ if (!gameStartedAt) gameStartedAt = Date.now(); }
+
+    function minutesPlayed(){
+      const start = gameStartedAt || PAGE_LOADED_AT;
+      const ms = Math.max(0, Date.now() - start);
+      return Math.max(1, Math.ceil(ms / 60000)); // dakikayı yukarı yuvarla, min 1
+    }
+
+    function categorize(text){
+      const t = text.toLowerCase();
+      if (t.includes('ceza')) return 'ceza';
+      if (t.includes('seks') || t.includes('öp') || t.includes('şaplak') || t.includes('boynunu') || t.includes('sarıl') || t.includes('kucağı')) return 'romantik/fiziksel';
+      if (t.includes('oyunu') || t.includes('oynayın') || t.includes('tutar') || t.includes('bırakır')) return 'oyun/aksiyon';
+      if (t.includes('alkol') || t.includes('sarhoş') || t.includes('yudum')) return 'içki';
+      if (t.includes('geçmiş kartlardan')) return 'joker';
+      return 'sohbet/itiraf';
+    }
+
+    function buildExperienceSummary(cards){
+      const counts = {};
+      cards.forEach(c => { const k = categorize(c); counts[k] = (counts[k]||0)+1; });
+      const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+      if (!entries.length) return 'Kısa ve dengeli bir tur oldu.';
+      const [top] = entries[0];
+      const second = entries[1];
+      const label = {
+        'sohbet/itiraf':'sohbet ağırlıklı',
+        'romantik/fiziksel':'romantik/fiziksel temaslı',
+        'ceza':'rekabet ve ceza odaklı',
+        'oyun/aksiyon':'hareketli/oyunsu',
+        'içki':'içkili',
+        'joker':'jokerli, esnek kurallı'
+      }[top] || top;
+      let s = `Özet: ${label} bir tur oynadınız`;
+      if (second) {
+        const [k2] = second;
+        const map2 = {
+          'sohbet/itiraf':'; sohbetler ikinci plandaydı',
+          'romantik/fiziksel':'; romantik anlar da vardı',
+          'ceza':'; biraz da ceza çıktı',
+          'oyun/aksiyon':'; hareketli görevler eşlik etti',
+          'içki':'; içkili kartlar da görüldü',
+          'joker':'; ara ara joker etkisi de oldu'
+        };
+        s += (map2[k2] || '');
+      }
+      s += '.';
+      return s;
+    }
+
+    function revealTimeline() {
+      const order = ['tl-duration','tl-summary','tl-offer','tl-coupon','tl-cta'];
+      order.forEach((id, idx) => setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('show');
+      }, 180 * idx));
+      timeline.classList.add('revealed');
+    }
+
+    function showEnd(){
+      ended = true;
+      stage.classList.add('hidden');
+      end.classList.remove('hidden');
+      if (info) info.textContent = 'Bitti';
+
+      const mins = minutesPlayed();
+      durationEl.textContent = `${mins} dakika oynadınız`;
+      expSummaryEl.textContent = buildExperienceSummary(deck);
+
+      revealTimeline();
+    }
+
+    function hideEnd(){
+      ended = false;
+      stage.classList.remove('hidden');
+      end.classList.add('hidden');
+      timeline.classList.remove('revealed');
+      ['tl-duration','tl-summary','tl-offer','tl-coupon','tl-cta'].forEach(id=>{
+        const el = document.getElementById(id); if (el) el.classList.remove('show');
+      });
+    }
+
+    function next(){
+      if (ended || tutOpen) return;
+      if (navigator.vibrate) navigator.vibrate(10);
+      if (i < deck.length - 1) { i += 1; render(); }
+      else { showEnd(); }
+    }
+
+    function reshuffle(){ deck = pickRandom(MASTER, 10); i = 0; hideEnd(); render(); }
+
+    async function copyCoupon(){
+      const text = couponCode.textContent.trim();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+        }
+        couponState.textContent = 'Kopyalandı!';
+        setTimeout(() => couponState.textContent = 'Kopyala', 1800);
+      } catch (e) {
+        couponState.textContent = 'Kopyalanamadı';
+        setTimeout(() => couponState.textContent = 'Kopyala', 1800);
+      }
+    }
+
+    function showTutorial(){ tutorial.classList.remove('hidden'); tutOpen = true; runStepper(); }
+    function hideTutorial(){ tutorial.classList.add('hidden'); tutOpen = false; startGameClock(); }
+
+    // ——— Inline tutorial ipuçları ———
+    let tIdx = 0; let tTimer;
+    const TIPS = [
+      'Telefonu ortaya koyun; karta dokundukça ilerler.',
+      'Her kartta sahne 180° döner; sıradaki kişi düz okur.',
+      'Her turda rastgele 10 kart gelir (kişi başı 5). Bittiğinde indirim sürprizi!'
+    ];
+    function runStepper(){
+      if (!tutHint) return;
+      tutHint.textContent = TIPS[tIdx];
+      clearTimeout(tTimer);
+      tTimer = setTimeout(() => { tIdx = (tIdx + 1) % TIPS.length; runStepper(); }, 2200);
+    }
+
+    // Etkileşimler
+    card.addEventListener('click', next);
+    tutorial.addEventListener('click', () => { if (tutOpen) hideTutorial(); });
+    tutorial.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && tutOpen) { e.preventDefault(); hideTutorial(); } });
+
+    document.addEventListener('keydown', (e) => {
+      if (tutOpen && (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape')) { hideTutorial(); return; }
+      if (e.key === 'ArrowRight' || e.key === ' ') next();
+    });
+
+    // İlk kurulum
+    reshuffle();
+    runStepper();
+    initPresence();
+
+    // ——— Otomatik Testler ———
+    (function selfTest(){
+      const snap = { i, ended, tutOpen };
+      try {
+        console.assert(Array.isArray(MASTER), 'MASTER bir dizi olmalı');
+        console.assert(MASTER.length === 30, 'MASTER 30 kart içermeli');
+        console.assert(new Set(MASTER).size === MASTER.length, 'MASTER içinde tekrar eden kart olmamalı');
+        console.assert(deck.length === 10, 'İlk reshuffle sonrası deste 10 olmalı');
+        console.assert(new Set(deck).size === 10, 'Destedeki kartlar benzersiz olmalı');
+        const allInMaster = deck.every(x => MASTER.includes(x));
+        console.assert(allInMaster, 'Destedeki tüm kartlar MASTER içinde olmalı');
+        // Live sayaç görünüyor olmalı
+        const lc = (document.getElementById('liveCount')||{}).textContent||'';
+        console.assert(/kişi/.test(lc), 'Live sayaç metni görünmeli');
+        // Tutorial tıklama ile kapanmalı
+        console.assert(tutOpen === true, 'Tutorial başlangıçta açık olmalı');
+        tutorial.dispatchEvent(new Event('click'));
+        console.assert(tutOpen === false && tutorial.classList.contains('hidden'), 'Tutorial tıklanınca kapanmalı');
+        // Bitiş ekranı
+        const saveI = i; i = deck.length - 1; render(); next();
+        console.assert(ended === true && !end.classList.contains('hidden'), 'Son karttan sonra bitiş ekranı açılmalı');
+        console.assert(/dakika/.test(document.getElementById('duration').textContent), 'Süre metni görünmeli');
+        console.assert(document.getElementById('expSummary').textContent.length > 4, 'Özet metni görünmeli');
+        const tl = document.querySelector('.timeline');
+        console.assert(!!tl && tl.classList.contains('revealed'), 'Timeline revealed olmalı');
+        // Geri yükle
+        reshuffle(); hideEnd();
+        if (snap.tutOpen) { tutorial.classList.remove('hidden'); tutOpen = true; } else { tutorial.classList.add('hidden'); tutOpen = false; }
+        i = snap.i; if (snap.ended) showEnd(); else render();
+        console.log('%cSelf-test: OK','padding:4px 8px;border:1px solid #0a0;color:#0a0');
+      } catch (e) { console.error('Self-test hata:', e); }
+    })();
+  </script>
+</body>
+</html>
