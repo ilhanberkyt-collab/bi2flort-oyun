@@ -6,11 +6,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#ffffff" />
-  <title>bi2flört – Kart Oyunu (Prototip)</title>
+  <title>bi2 Kart Oyunları – Ücretsiz Deneme</title>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --card-w: min(92vw, 460px);
+      --card-w: min(100%, 460px);
+      --game: #EC4C98;
       --radius: 18px;
       --ink: #1e1e1e;
       --muted: #6a6a6a;
@@ -22,10 +23,10 @@
       --bg3: #f4fff7;    /* pastel mint  */
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
+    /* Sayfaya iframe ile gömülü: kaydırma çubuğu çıkıp içeriği yana itmesin */
+    html, body { height: 100%; overflow: hidden; }
     body {
       margin: 0; font-family: Lora, serif; color: var(--ink);
-      min-height: 100svh;
       background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
       display: grid; place-items: center;
       -webkit-tap-highlight-color: transparent; touch-action: manipulation;
@@ -34,7 +35,26 @@
       width: 100%; height: 100%;
       padding: calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 14px);
       display: grid; grid-template-rows: auto 1fr auto; gap: 12px; align-items: start; justify-items: center;
+      overflow-x: hidden; overflow-y: auto; scrollbar-width: none;
     }
+    .app::-webkit-scrollbar { display: none; }
+
+    /* ——— Oyun seçimi ——— */
+    .picker { width: var(--card-w); align-self: center; display: grid; gap: 12px; text-align: center; }
+    .picker h2 { margin: 0; font-size: clamp(22px, 6vw, 28px); font-weight: 600; line-height: 1.25; }
+    .picker .pk-sub { margin: 0 0 4px; font-size: 15px; }
+    .pk-list { display: grid; gap: 12px; }
+    .pk-btn {
+      display: grid; gap: 4px; padding: 18px 20px; border: 0; border-radius: var(--radius);
+      background: var(--game); color: #fff; font-family: inherit; text-align: left; cursor: pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.10); transition: transform .15s ease;
+    }
+    .pk-btn:active { transform: scale(.98); }
+    .pk-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .pk-btn b { font-size: 24px; font-weight: 600; letter-spacing: .2px; }
+    .pk-btn span { font-size: 15px; opacity: .92; }
+    .pk-btn.dark { color: var(--ink); }
+    .picker .pk-note { margin: 2px 0 0; font-size: 13px; }
 
     /* ——— Üst bar gizli (tutorial yazısız) ——— */
     .topbar { width: 100%; display: grid; gap: 10px; place-items: center; }
@@ -71,7 +91,7 @@
     .card {
       position: relative; width: 100%; height: 100%; background: var(--paper);
       border-radius: var(--radius); box-shadow: 0 10px 26px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.06);
-      border: 1px solid #e6e6e6; display: grid; grid-template-rows: 1fr auto; padding: 24px; gap: 8px;
+      border: 1px solid #e6e6e6; border-top: 6px solid var(--game); display: grid; grid-template-rows: 1fr auto; padding: 24px; gap: 8px;
       user-select: none; cursor: pointer; text-align: center; transition: opacity .25s ease, transform .25s ease;
     }
     .stage.tut .card { opacity: 0; transform: scale(.98); pointer-events: none; }
@@ -181,6 +201,8 @@
     .cta { position: relative; display: inline-block; text-decoration: none; text-align: center; padding: 14px 18px; border-radius: 14px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: #fff; font-weight: 700; }
     .cta::after { content:""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.0) 0%, rgba(255,255,255,.5) 50%, rgba(255,255,255,.0) 100%); transform: translateX(-120%); }
     .cta:active { transform: translateY(1px); }
+    .offer-actions { display: grid; gap: 10px; margin-top: 12px; }
+    .again { display: block; margin: 14px auto 0; padding: 8px 12px; border: 0; background: none; font-family: inherit; font-size: 15px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -191,7 +213,18 @@
       </div>
     </div>
 
-    <div class="stage tut" id="stage" aria-live="polite" aria-atomic="true">
+    <div class="picker" id="picker">
+      <h2>Hangi oyunu oynamak istersin?</h2>
+      <p class="pk-sub muted">Seçtiğin oyunun destesinden rastgele kartlar gelecek.</p>
+      <div class="pk-list">
+        <button type="button" class="pk-btn" data-game="flort" style="--game:#EC4C98"><b>bi2flört</b><span>Date gecesi için · 2 kişi</span></button>
+        <button type="button" class="pk-btn" data-game="friend" style="--game:#8878B4"><b>bi2friend</b><span>Arkadaş buluşmaları için · 2+ kişi</span></button>
+        <button type="button" class="pk-btn dark" data-game="shot" style="--game:#FCD028"><b>bi2shot</b><span>Partiler için · 2+ kişi</span></button>
+      </div>
+      <p class="pk-note muted">Tüm oyunlar 18 yaş ve üzeri içindir.</p>
+    </div>
+
+    <div class="stage tut hidden" id="stage" aria-live="polite" aria-atomic="true">
       <div class="stack" aria-hidden="true">
         <div class="back b3"></div>
         <div class="back b2"></div>
@@ -256,29 +289,20 @@
         <div class="body">
           <h1 id="cardText">Yükleniyor…</h1>
         </div>
-        <div class="watermark">bi2flört</div>
+        <div class="watermark" id="watermark">bi2flört</div>
       </div>
     </div>
 
     <div id="end" class="end hidden" aria-live="polite">
       <div class="timeline" id="timeline">
-        <div class="tli" id="tl-duration">
-          <div class="dot" aria-hidden="true"></div>
-          <div class="tile">
-            <div class="head">
-              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-              <h3>Süre</h3>
-            </div>
-            <div id="duration" class="lead">—</div>
-          </div>
-        </div>
         <div class="tli" id="tl-summary">
           <div class="dot" aria-hidden="true"></div>
           <div class="tile">
             <div class="head">
-              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 4.6L19 9l-4.4 1.8L12 16l-2.6-5.2L5 9l4.8-2.4L12 2z"/></svg></span>
+              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
               <h3>Deneyim Özeti</h3>
             </div>
+            <div id="duration" class="lead">—</div>
             <div id="expSummary" class="sub">—</div>
           </div>
         </div>
@@ -290,41 +314,26 @@
               <h3>Teklif</h3>
             </div>
             <div class="lead">deneme nasıldı bilmiyoruz ama tamamından çok zevk alacağınıza eminiz hemen %10 indirimle satın almak için aşağıdaki butona bas</div>
-          </div>
-        </div>
-        <div class="tli" id="tl-coupon">
-          <div class="dot" aria-hidden="true"></div>
-          <div class="tile">
-            <div class="head">
-              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14v4a2 2 0 0 0 0 4v4H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z"/><path d="M12 6v12" stroke-dasharray="3 3"/></svg></span>
-              <h3>İndirim Kodu</h3>
+            <div class="offer-actions">
+              <div id="coupon" class="coupon" role="button" aria-label="İndirim kodunu kopyala" tabindex="0">
+                <code id="couponCode">deneme10</code>
+                <span class="state" id="couponState">Kopyala</span>
+              </div>
+              <a class="cta" id="cta" href="https://bi2shop.com/" target="_top">hemen al yarın kargolansın</a>
             </div>
-            <div id="coupon" class="coupon" role="button" aria-label="İndirim kodunu kopyala" tabindex="0">
-              <code id="couponCode">deneme10</code>
-              <span class="state" id="couponState">Kopyala</span>
-            </div>
-          </div>
-        </div>
-        <div class="tli" id="tl-cta">
-          <div class="dot" aria-hidden="true"></div>
-          <div class="tile">
-            <div class="head">
-              <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 12H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></span>
-              <h3>Satın Alma</h3>
-            </div>
-            <a class="cta" id="cta" href="https://bi2shop.com/" target="_blank" rel="noopener">hemen al yarın kargolansın</a>
           </div>
         </div>
       </div>
+      <button type="button" class="again" id="again">Başka bir oyun dene</button>
     </div>
 
-    <div class="muted" id="progress">0 / 10</div>
+    <div class="muted hidden" id="progress">0 / 10</div>
   </div>
 
   <script>
     const PAGE_LOADED_AT = Date.now();
 
-    // ——— Kart Havuzu (30) ———
+    // ——— bi2flört kart havuzu (30) ———
     const MASTER = [
       "Bir dakika boyunca birbirinizin gözlerine bakın, ilk kırpan ceza kartı çeker. Kimse kırpmazsa belki öpüşürsünüz zaten.",
       "Şu an bulunduğun ortamda sana en garip ve en hoş gelen nesneleri söyle ve neden böyle düşündüğünü açıkla.",
@@ -358,13 +367,48 @@
       "Alkoller bittiyse tam şu an tazeleme vakti, eğer bitmediyse bi yudum daha alın."
     ];
 
-    // ——— Seçili Deste (10 rastgele) ———
+    const FRIEND = [
+      "Bir ilişkin varken bile asla hayır diyemeyeceğin o kişi kim?",
+      "Çok mutlu olduğunda nasıl görünüyorsun herkes seni anlatsın.",
+      "Bu kartı sesli okuma, oynayanlar arasından en lafına güvenilmez olana bu kartı ver. Başka kimse görmesin ve duymasın.",
+      "Herkes bi’ red flag söylesin. En iyi red flag hangisiydi seçin.",
+      "1 ay ömrün kaldığını öğreniyorsun, bu 1 ayda neler yapardın? Herkes sırayla cevaplasın."
+    ];
+
+    const SHOT = [
+      "Ortamda eğlenmeyip eğleniyormuş gibi gözüktüysen iç.",
+      "İlişki yüzünden terapiye başladıysan iç.",
+      "Yakın arkadaşının eski sevgilisine yürüyenler 2 shot atsın.",
+      "Hala birine stalk hesabınla gizli gizli bakıyorsan iç.",
+      "“Ara verelim” diyip başkasıyla birlikte olduysan iç.",
+      "Aniden “müsait misin?” mesajı aldığında geriliyorsan iç.",
+      "İlgini çekmeyen birine umut verdiysen iç.",
+      "Son 24 saatte seviştiysen iç.",
+      "“Sarhoş hatırlamıyorum” bahanesini kullandıysan iç.",
+      "Özür dileyip hala haklı olduğunu düşündüysen iç."
+    ];
+
+    const GAMES = {
+      flort:  { name: 'bi2flört',  color: '#EC4C98', url: 'https://bi2shop.com/bi2flort-lite-edition-pack', cards: MASTER },
+      friend: { name: 'bi2friend', color: '#8878B4', url: 'https://bi2shop.com/bi2friend', cards: FRIEND },
+      shot:   { name: 'bi2shot',   color: '#FCD028', url: 'https://bi2shop.com/bi2shot-gercek-shot-oyunu', cards: SHOT }
+    };
+    const DECK_SIZE = 10; // havuz daha küçükse havuzun tamamı oynanır
+
+    // ——— Seçili Deste ———
+    let game = null;
     let deck = [];
     let i = 0;
     let ended = false;
-    let tutOpen = true; // inline tutorial başlangıçta açık
+    let tutOpen = false;
+    let pickerOpen = true; // açılışta oyun seçimi
     let gameStartedAt = null;
+    let testing = false;
 
+    const picker = document.getElementById('picker');
+    const watermark = document.getElementById('watermark');
+    const cta = document.getElementById('cta');
+    const again = document.getElementById('again');
     const stage = document.getElementById('stage');
     const card = document.getElementById('card');
     const cardText = document.getElementById('cardText');
@@ -392,6 +436,7 @@
     }
 
     function pickRandom(arr, n){
+      n = Math.min(n, arr.length);
       const idxs = new Set();
       while (idxs.size < n) idxs.add(randInt(arr.length));
       return [...idxs].map(k => arr[k]);
@@ -421,7 +466,7 @@
       if (t.includes('ceza')) return 'ceza';
       if (t.includes('seks') || t.includes('öp') || t.includes('şaplak') || t.includes('boynunu') || t.includes('sarıl') || t.includes('kucağı')) return 'romantik/fiziksel';
       if (t.includes('oyunu') || t.includes('oynayın') || t.includes('tutar') || t.includes('bırakır')) return 'oyun/aksiyon';
-      if (t.includes('alkol') || t.includes('sarhoş') || t.includes('yudum')) return 'içki';
+      if (t.includes('alkol') || t.includes('sarhoş') || t.includes('yudum') || t.includes('shot') || /(^|\s)iç[.!]?$/.test(t)) return 'içki';
       if (t.includes('geçmiş kartlardan')) return 'joker';
       return 'sohbet/itiraf';
     }
@@ -458,9 +503,10 @@
       return s;
     }
 
+    const TIMELINE_IDS = ['tl-summary','tl-offer'];
+    let revealTimers = [];
     function revealTimeline() {
-      const order = ['tl-duration','tl-summary','tl-offer','tl-coupon','tl-cta'];
-      order.forEach((id, idx) => setTimeout(() => {
+      revealTimers = TIMELINE_IDS.map((id, idx) => setTimeout(() => {
         const el = document.getElementById(id);
         if (el) el.classList.add('show');
       }, 180 * idx));
@@ -484,19 +530,36 @@
       stage.classList.remove('hidden');
       end.classList.add('hidden');
       timeline.classList.remove('revealed');
-      ['tl-duration','tl-summary','tl-offer','tl-coupon','tl-cta'].forEach(id=>{
+      revealTimers.forEach(clearTimeout); revealTimers = [];
+      TIMELINE_IDS.forEach(id=>{
         const el = document.getElementById(id); if (el) el.classList.remove('show');
       });
     }
 
     function next(){
-      if (ended || tutOpen) return;
-      if (navigator.vibrate) navigator.vibrate(10);
+      if (ended || tutOpen || pickerOpen) return;
+      if (navigator.vibrate && !testing) navigator.vibrate(10);
       if (i < deck.length - 1) { i += 1; render(); }
       else { showEnd(); }
     }
 
-    function reshuffle(){ deck = pickRandom(MASTER, 10); i = 0; hideEnd(); render(); }
+    function reshuffle(){ deck = pickRandom(game.cards, DECK_SIZE); i = 0; hideEnd(); render(); }
+
+    function startGame(key){
+      game = GAMES[key];
+      document.documentElement.style.setProperty('--game', game.color);
+      watermark.textContent = game.name;
+      cta.href = `${game.url}?utm_source=oyun-deneyimi&utm_campaign=${key}`;
+      pickerOpen = false; gameStartedAt = null;
+      picker.classList.add('hidden'); progress.classList.remove('hidden');
+      reshuffle(); showTutorial();
+    }
+
+    function openPicker(){
+      hideTutorial(); hideEnd();
+      pickerOpen = true; stage.style.transform = '';
+      stage.classList.add('hidden'); progress.classList.add('hidden'); picker.classList.remove('hidden');
+    }
 
     async function copyCoupon(){
       const text = couponCode.textContent.trim();
@@ -530,29 +593,32 @@
 
     // ——— Inline tutorial ipuçları (üst bar - gizli ama kalsın) ———
     let tIdx = 0; let tTimer;
-    const TIPS = [ 'Telefona sırayla dokunun; kart açılır.', 'Her kartta sahne 180° döner; karşı taraf düz okur.', 'Her oyunda rastgele 10 kart gelir. Bittiğinde indirim sürprizi!' ];
-    const CAPTIONS = [ "Bi' sonraki kartı görmek için karta tıkla", "Kart otomatik diğer kişiye dönecek", "10 özel denemen var" ];
+    const TIPS = [ 'Telefona sırayla dokunun; kart açılır.', 'Her kartta sahne 180° döner; karşı taraf düz okur.', 'Her oyunda rastgele kartlar gelir. Bittiğinde indirim sürprizi!' ];
+    const CAPTIONS = [ "Bi' sonraki kartı görmek için karta tıkla", "Kart otomatik diğer kişiye dönecek", "" ];
+    function caption(k){ return k === 2 ? `${deck.length} özel denemen var` : CAPTIONS[k]; }
     function runStepper(){ if (!tutHint) return; tutHint.textContent = TIPS[tIdx]; clearTimeout(tTimer); tTimer = setTimeout(() => { tIdx = (tIdx + 1) % TIPS.length; runStepper(); }, 2600); }
 
     // ——— Tutorial animasyon kontrol ———
     let introIdx = 0; let introTimer; let slides;
     function showSlide(k){ if (!slides) return; slides.forEach((el, idx)=> el.classList.toggle('show', idx===k)); }
+    const pips = (document.getElementById('pips')||{}).children || [];
     function startIntro(){
       slides = Array.from(document.querySelectorAll('#intro .slide'));
       introIdx = 0; showSlide(introIdx);
-      if (introCaption) introCaption.textContent = CAPTIONS[0];
-      // S2 avatar highlight döngüsü
+      if (introCaption) introCaption.textContent = caption(0);
+      for (let j = 0; j < pips.length; j++) pips[j].classList.toggle('hidden', j >= deck.length);
+      clearTimeout(introTimer); introTimer = setTimeout(cycleIntro, 3000);
+    }
+    // S2 avatar highlight ve S3 pips döngüleri (bir kez kurulur)
+    (function introLoops(){
       const avatars = document.getElementById('avatars');
       let avTop = true;
       setInterval(()=>{ if (!tutOpen) return; avTop = !avTop; avatars.classList.toggle('active-top', avTop); avatars.classList.toggle('active-bot', !avTop); }, 2100);
-      // S3 pips akışı
-      const pips = (document.getElementById('pips')||{}).children || [];
-      let pipIdx = 0; setInterval(()=>{ if (!tutOpen) return; for(let j=0;j<pips.length;j++){ pips[j].classList.toggle('on', j<=pipIdx); } pipIdx = (pipIdx+1)%10; }, 380);
-      clearTimeout(introTimer); introTimer = setTimeout(cycleIntro, 3000);
-    }
+      let pipIdx = 0; setInterval(()=>{ if (!tutOpen) return; for(let j=0;j<pips.length;j++){ pips[j].classList.toggle('on', j<=pipIdx); } pipIdx = (pipIdx+1) % Math.max(1, deck.length); }, 380);
+    })();
     function stopIntro(){ clearTimeout(introTimer); }
     function cycleIntro(){ if (!tutOpen) return; introIdx = (introIdx + 1) % 3; showSlide(introIdx);
-      if (introCaption) introCaption.textContent = CAPTIONS[introIdx]; introTimer = setTimeout(cycleIntro, 3200); }
+      if (introCaption) introCaption.textContent = caption(introIdx); introTimer = setTimeout(cycleIntro, 3200); }
 
     // Etkileşimler
     card.addEventListener('click', next);
@@ -561,46 +627,44 @@
     intro.addEventListener('click', () => { if (tutOpen) hideTutorial(); });
     intro.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && tutOpen) { e.preventDefault(); hideTutorial(); } });
     coupon.addEventListener('click', copyCoupon);
+    picker.querySelectorAll('[data-game]').forEach(btn => btn.addEventListener('click', () => startGame(btn.dataset.game)));
+    again.addEventListener('click', openPicker);
 
     document.addEventListener('keydown', (e) => {
+      if (pickerOpen) return;
       if (tutOpen && (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape')) { hideTutorial(); return; }
       if (e.key === 'ArrowRight' || e.key === ' ') next();
     });
 
     // İlk kurulum
-
-    reshuffle(); runStepper(); startIntro();
+    runStepper();
 
     // ——— Otomatik Testler ———
     (function selfTest(){
-      const snap = { i, ended, tutOpen };
+      testing = true;
       try {
-        console.assert(Array.isArray(MASTER), 'MASTER bir dizi olmalı');
-        console.assert(MASTER.length === 30, 'MASTER 30 kart içermeli');
-        console.assert(new Set(MASTER).size === MASTER.length, 'MASTER içinde tekrar eden kart olmamalı');
-        console.assert(deck.length === 10, 'İlk reshuffle sonrası deste 10 olmalı');
-        console.assert(new Set(deck).size === 10, 'Destedeki kartlar benzersiz olmalı');
-        const allInMaster = deck.every(x => MASTER.includes(x));
-        console.assert(allInMaster, 'Destedeki tüm kartlar MASTER içinde olmalı');
-        // Tutorial başlangıçta açık ve intro görünür olmalı
-        console.assert(tutOpen === true, 'Tutorial başlangıçta açık olmalı');
-        console.assert(document.getElementById('intro') && !document.getElementById('intro').classList.contains('hidden'), 'Intro görünür olmalı');
-        console.assert(stage.classList.contains('tut'), 'Stage tut sınıfı almalı');
-        // Tutorial tıklama ile kapanmalı
-        document.getElementById('intro').dispatchEvent(new Event('click'));
-        console.assert(tutOpen === false && document.getElementById('intro').classList.contains('hidden'), 'Intro tıklanınca kapanmalı');
-        // Bitiş ekranı
-        const saveI = i; i = deck.length - 1; render(); next();
-        console.assert(ended === true && !end.classList.contains('hidden'), 'Son karttan sonra bitiş ekranı açılmalı');
-        console.assert(/dakika/.test(document.getElementById('duration').textContent), 'Süre metni görünmeli');
-        console.assert(document.getElementById('expSummary').textContent.length > 4, 'Özet metni görünmeli');
-        const tl = document.querySelector('.timeline');
-        console.assert(!!tl && tl.classList.contains('revealed'), 'Timeline revealed olmalı');
-        // Geri yükle
-        reshuffle(); hideEnd(); if (snap.tutOpen) { showTutorial(); } else { hideTutorial(); }
-        i = snap.i; if (snap.ended) showEnd(); else { render(); }
+        console.assert(pickerOpen && !picker.classList.contains('hidden') && stage.classList.contains('hidden'), 'Açılışta oyun seçimi görünmeli');
+        console.assert(MASTER.length === 30, 'bi2flört havuzu 30 kart içermeli');
+        Object.entries(GAMES).forEach(([key, g]) => {
+          console.assert(new Set(g.cards).size === g.cards.length, `${key}: havuzda tekrar eden kart olmamalı`);
+          startGame(key);
+          const n = Math.min(DECK_SIZE, g.cards.length);
+          console.assert(deck.length === n && new Set(deck).size === n, `${key}: deste ${n} benzersiz kart olmalı`);
+          console.assert(deck.every(x => g.cards.includes(x)), `${key}: kartlar kendi havuzundan gelmeli`);
+          console.assert(watermark.textContent === g.name, `${key}: kart üzerinde oyun adı yazmalı`);
+          console.assert(tutOpen && !intro.classList.contains('hidden'), `${key}: seçimden sonra anlatım açılmalı`);
+          intro.dispatchEvent(new Event('click'));
+          console.assert(!tutOpen && intro.classList.contains('hidden'), `${key}: anlatım tıklanınca kapanmalı`);
+          for (let k = 0; k < n; k++) next();
+          console.assert(ended && !end.classList.contains('hidden'), `${key}: son karttan sonra bitiş ekranı açılmalı`);
+          console.assert(/dakika/.test(durationEl.textContent) && expSummaryEl.textContent.length > 4, `${key}: süre ve özet görünmeli`);
+          console.assert(cta.href.startsWith(g.url), `${key}: satın alma linki oyunun ürün sayfası olmalı`);
+          openPicker();
+        });
+        console.assert(pickerOpen && !picker.classList.contains('hidden') && stage.classList.contains('hidden') && end.classList.contains('hidden'), 'Test sonunda oyun seçimine dönülmeli');
         console.log('%cSelf-test: OK','padding:4px 8px;border:1px solid #0a0;color:#0a0');
       } catch (e) { console.error('Self-test hata:', e); }
+      testing = false;
     })();
   </script>
 </body>
